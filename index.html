@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>POS Template</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app">
+        <header>
+            <div class="brand">🧾 POS Mini</div>
+            <div class="search">
+                <input id="search" placeholder="Tìm sản phẩm — / để focuss" />
+                <button class="btn" id="clearCart" title="Alt+X">Xoá giỏ</button>
+            </div>
+            <div style="text-align:right;display:flex;gap:8px;justify-content:flex-end;align-items:center">
+                <button class="btn" id="manageBtn" title="Quản lý sản phẩm (Alt+M)">Quản lý SP</button>
+                <div class="note">Phím tắt: <b>/</b> Tìm • <b>Alt+P</b> Thanh toán • <b>Alt+M</b> Quản lý • <b>Alt+X</b>
+                    Xoá giỏ</div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Danh mục -->
+            <section class="panel">
+                <h3>Danh mục</h3>
+                <div class="categories" id="categories"></div>
+            </section>
+
+            <!-- Lưới sản phẩm -->
+            <section class="panel catalog">
+                <h3>Sản phẩm</h3>
+                <div class="grid" id="productGrid"></div>
+            </section>
+
+            <!-- Giỏ hàng -->
+            <section class="panel cart">
+                <h3>Giỏ hàng</h3>
+                <div class="cart-body" id="cartList"></div>
+                <div class="cart-footer">
+                    <div class="inputs">
+                        <label>Giảm giá (đ)
+                            <input type="number" id="discount" min="0" step="1000" value="0">
+                        </label>
+                        <label>Thuế VAT
+                            <select id="taxRate">
+                                <option value="0">0%</option>
+                                <option value="0.05">5%</option>
+                                <option value="0.1" selected>10%</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="rows">
+                        <div class="row"><span>Tạm tính</span><span id="subtotal">0</span></div>
+                        <div class="row"><span>Thuế</span><span id="tax">0</span></div>
+                        <div class="row"><span>Giảm giá</span><span id="discountShow">0</span></div>
+                        <div class="row"><strong>Tổng cộng</strong><strong id="grandTotal">0</strong></div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn ghost" id="hold">Giữ hoá đơn</button>
+                        <button class="btn primary" id="payBtn" title="Alt+P">Thanh toán</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal thanh toán -->
+    <div class="backdrop" id="payModal">
+        <div class="modal">
+            <h2>Thanh toán</h2>
+            <div class="grid2">
+                <div>
+                    <label>Phương thức</label>
+                    <select id="payMethod">
+                        <option>Tiền mặt</option>
+                        <option>Thẻ</option>
+                        <option>Chuyển khoản</option>
+                        <option>Ví điện tử</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Tiền khách đưa (đ)</label>
+                    <input type="number" id="cashGiven" min="0" step="1000" />
+                </div>
+            </div>
+            <div class="row"><span>Tổng phải thu</span><strong id="due">0</strong></div>
+            <div class="row"><span>Tiền thối</span><strong id="change">0</strong></div>
+            <div class="note">Mẹo: gõ số rồi Enter để hoàn tất.</div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button class="btn" id="closePay">Huỷ</button>
+                <button class="btn primary" id="completeSale">Hoàn tất & In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal quản lý sản phẩm -->
+    <div class="backdrop" id="manageModal">
+        <div class="modal" style="max-width:900px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <h2>Quản lý sản phẩm</h2>
+                <div>
+                    <button class="btn" id="newProduct">+ Thêm sản phẩm</button>
+                    <button class="btn" id="closeManage">Đóng</button>
+                </div>
+            </div>
+            <div style="overflow:auto;max-height:60vh">
+                <table class="table" id="productTable">
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Tên</th>
+                            <th>Danh mục</th>
+                            <th>Giá</th>
+                            <th>Ảnh</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal form sản phẩm -->
+    <div class="backdrop" id="formModal">
+        <div class="modal">
+            <h3 id="formTitle">Thêm sản phẩm</h3>
+            <div class="grid3">
+                <div>
+                    <label>Mã (ID)</label>
+                    <input id="f_id" placeholder="VD: CF001">
+                </div>
+                <div>
+                    <label>Tên</label>
+                    <input id="f_name" placeholder="Tên sản phẩm">
+                </div>
+                <div>
+                    <label>Danh mục</label>
+                    <input id="f_cat" list="catList" placeholder="VD: Đồ uống">
+                    <datalist id="catList"></datalist>
+                </div>
+            </div>
+            <div class="grid2">
+                <div>
+                    <label>Giá (đ)</label>
+                    <input type="number" id="f_price" min="0" step="1000">
+                </div>
+                <div>
+                    <label>Ảnh (URL)</label>
+                    <input type="url" id="f_image" placeholder="https://...">
+                </div>
+            </div>
+            <div>
+                <div class="note">Hoặc tải ảnh từ máy (PNG/JPG):</div>
+                <input type="file" id="f_file" accept="image/*">
+                <div style="margin-top:8px;display:flex;gap:12px;align-items:center">
+                    <div class="thumb" style="width:140px"><img id="f_preview" alt=""></div>
+                    <div class="note">Ảnh sẽ được lưu dạng base64 trong LocalStorage (chỉ dùng nội bộ trên máy này).
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button class="btn" id="formCancel">Huỷ</button>
+                <button class="btn primary" id="formSave">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Khu vực in -->
+    <div id="receipt"></div>
+
+    <script>
+        (function () {
+            // ====== LƯU TRỮ ======
+            const LS_KEY = "pos_products";
+            const byId = id => document.getElementById(id);
+            const fmt = n => n.toLocaleString("vi-VN");
+
+            // Mẫu với ảnh thực tế (Unsplash)
+            const defaultProducts = [
+                { id: "CF001", name: "Cà phê sữa", price: 25000, cat: "Đồ uống", image: "https://images.unsplash.com/photo-1512568400610-62da28bc8a13?q=80&w=800&auto=format&fit=crop" },
+                { id: "CF002", name: "Cà phê đen", price: 22000, cat: "Đồ uống", image: "https://images.unsplash.com/photo-1503481766315-7a586b20f66d?q=80&w=800&auto=format&fit=crop" },
+                { id: "TE001", name: "Trà đào", price: 30000, cat: "Đồ uống", image: "https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=800&auto=format&fit=crop" },
+                { id: "TE002", name: "Trà chanh", price: 18000, cat: "Đồ uống", image: "https://images.unsplash.com/photo-1497534547324-0ebb3f052e88?q=80&w=800&auto=format&fit=crop" },
+                { id: "FD001", name: "Bánh mì thịt", price: 35000, cat: "Đồ ăn", image: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=800&auto=format&fit=crop" },
+                { id: "FD002", name: "Mì xào bò", price: 55000, cat: "Đồ ăn", image: "https://images.unsplash.com/photo-1589301773859-b000f3f9ce5a?q=80&w=800&auto=format&fit=crop" },
+                { id: "SN001", name: "Khoai tây chiên", price: 28000, cat: "Snack", image: "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?q=80&w=800&auto=format&fit=crop" },
+                { id: "SN002", name: "Bắp rang bơ", price: 20000, cat: "Snack", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=800&auto=format&fit=crop" },
+                { id: "OT001", name: "Túi nilon", price: 2000, cat: "Khác", image: "https://images.unsplash.com/photo-1520975922323-0f2262cbb7f1?q=80&w=800&auto=format&fit=crop" },
+                { id: "OT002", name: "Khăn giấy", price: 5000, cat: "Khác", image: "https://images.unsplash.com/photo-1581761896161-878c6de86b7e?q=80&w=800&auto=format&fit=crop" },
+            ];
+            function loadProducts() {
+                try {
+                    const raw = localStorage.getItem(LS_KEY);
+                    if (!raw) return defaultProducts.slice();
+                    const arr = JSON.parse(raw);
+                    if (!Array.isArray(arr) || arr.length === 0) return defaultProducts.slice();
+                    return arr;
+                } catch (e) { console.warn(e); return defaultProducts.slice(); }
+            }
+            function saveProducts() { localStorage.setItem(LS_KEY, JSON.stringify(products)); refreshAll(); }
+            let products = loadProducts();
+
+            // ====== TRẠNG THÁI & UI CHUNG ======
+            let activeCat = "Tất cả";
+            let query = "";
+            const cart = new Map();
+
+            const catWrap = byId("categories");
+            const grid = byId("productGrid");
+            const search = byId("search");
+
+            // ====== DANH MỤC ======
+            function getCategories() {
+                const set = new Set(products.map(p => p.cat));
+                return ["Tất cả", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+            }
+            function renderCats() {
+                const categories = getCategories();
+                if (!categories.includes(activeCat)) activeCat = "Tất cả";
+                catWrap.innerHTML = "";
+                categories.forEach(c => {
+                    const btn = document.createElement("button");
+                    btn.className = "cat" + (c === activeCat ? " active" : "");
+                    btn.textContent = c;
+                    btn.onclick = () => { activeCat = c; renderProducts(); };
+                    catWrap.appendChild(btn);
+                });
+                // cập nhật datalist cho form
+                const dl = byId("catList"); dl.innerHTML = "";
+                categories.filter(x => x !== "Tất cả").forEach(c => {
+                    const o = document.createElement("option"); o.value = c; dl.appendChild(o);
+                });
+            }
+
+            // ====== SẢN PHẨM (LƯỚI) ======
+            function renderProducts() {
+                const q = query.toLowerCase();
+                const list = products.filter(p => {
+                    const okCat = activeCat === "Tất cả" || p.cat === activeCat;
+                    const okQ = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
+                    return okCat && okQ;
+                });
+                grid.innerHTML = "";
+                list.forEach(p => {
+                    const card = document.createElement("div");
+                    card.className = "card";
+                    card.innerHTML = `
+        <div class="thumb"><img alt="${p.name}" src="${p.image || ""}" onerror="this.src=''; this.parentElement.style.background='linear-gradient(135deg,#eef2ff,#fef3c7)'; this.parentElement.textContent='No Image'"></div>
+        <div class="pname">${p.name}</div>
+        <div class="muted">Mã: ${p.id} • ${p.cat}</div>
+        <div class="price">${fmt(p.price)} đ</div>
+        <button class="btn" data-id="${p.id}">Thêm</button>
+        <div class="edit-badge" title="Sửa sản phẩm">✎</div>
+      `;
+                    card.querySelector("button").onclick = () => addToCart(p.id);
+                    card.querySelector(".edit-badge").onclick = () => openForm(p); // sửa nhanh
+                    grid.appendChild(card);
+                });
+            }
+
+            // ====== GIỎ HÀNG ======
+            const cartList = byId("cartList");
+            const subtotalEl = byId("subtotal");
+            const taxEl = byId("tax");
+            const grandEl = byId("grandTotal");
+            const discountInput = byId("discount");
+            const discountShow = byId("discountShow");
+            const taxRateSel = byId("taxRate");
+
+            function addToCart(id) {
+                const p = products.find(x => x.id === id);
+                if (!p) return alert("Không tìm thấy sản phẩm: " + id);
+                if (!cart.has(id)) cart.set(id, { ...p, qty: 1 });
+                else cart.get(id).qty++;
+                renderCart();
+            }
+            function changeQty(id, delta) {
+                if (!cart.has(id)) return;
+                const item = cart.get(id);
+                item.qty = Math.max(1, item.qty + delta);
+                renderCart();
+            }
+            function removeItem(id) { cart.delete(id); renderCart(); }
+            function clearCart() { cart.clear(); renderCart(); }
+
+            function calc() {
+                let subtotal = 0;
+                cart.forEach(i => { subtotal += i.price * i.qty; });
+                const discount = Math.min(Number(discountInput.value || 0), subtotal);
+                const tax = Math.max(0, (subtotal - discount) * Number(taxRateSel.value || 0));
+                const grand = Math.max(0, subtotal - discount + tax);
+                return { subtotal, discount, tax, grand };
+            }
+            function renderCart() {
+                cartList.innerHTML = "";
+                cart.forEach(i => {
+                    const row = document.createElement("div");
+                    row.className = "cart-item";
+                    row.innerHTML = `
+        <div>
+          <div style="font-weight:700">${i.name}</div>
+          <div class="muted">${i.id}</div>
+        </div>
+        <div class="qty">
+          <button aria-label="Giảm">−</button>
+          <div>${i.qty}</div>
+          <button aria-label="Tăng">+</button>
+        </div>
+        <div class="line-total">${fmt(i.price * i.qty)} đ</div>
+        <button class="btn danger" aria-label="Xoá">Xoá</button>
+      `;
+                    const [minus, plus] = row.querySelectorAll(".qty button");
+                    minus.onclick = () => changeQty(i.id, -1);
+                    plus.onclick = () => changeQty(i.id, +1);
+                    row.querySelector(".btn.danger").onclick = () => removeItem(i.id);
+                    cartList.appendChild(row);
+                });
+                const { subtotal, discount, tax, grand } = calc();
+                subtotalEl.textContent = fmt(subtotal) + " đ";
+                taxEl.textContent = fmt(tax) + " đ";
+                discountShow.textContent = "− " + fmt(discount) + " đ";
+                grandEl.textContent = fmt(grand) + " đ";
+                byId("due").textContent = fmt(grand) + " đ";
+            }
+
+            // ====== TÌM KIẾM ======
+            search.addEventListener("input", e => { query = e.target.value.trim(); renderProducts(); });
+
+            // ====== THANH TOÁN ======
+            const payModal = byId("payModal");
+            const payBtn = byId("payBtn");
+            const closePay = byId("closePay");
+            const cashGiven = byId("cashGiven");
+            const changeEl = byId("change");
+            const completeSale = byId("completeSale");
+
+            function openPay() {
+                if (cart.size === 0) { alert("Giỏ hàng đang trống."); return; }
+                const { grand } = calc();
+                byId("due").textContent = fmt(grand) + " đ";
+                changeEl.textContent = "0 đ";
+                cashGiven.value = "";
+                payModal.style.display = "flex";
+                cashGiven.focus();
+            }
+            function closePayModal() { payModal.style.display = "none"; }
+
+            cashGiven.addEventListener("input", () => {
+                const given = Number(cashGiven.value || 0);
+                const due = calc().grand;
+                const change = Math.max(0, given - due);
+                changeEl.textContent = fmt(change) + " đ";
+            });
+            cashGiven.addEventListener("keydown", e => { if (e.key === "Enter") finalize(); });
+            completeSale.onclick = finalize;
+
+            // In hoá đơn
+            function finalize() {
+                const data = Array.from(cart.values());
+                const { subtotal, discount, tax, grand } = calc();
+                const r = document.getElementById("receipt");
+                const now = new Date();
+                r.innerHTML = `
+      <h2>HÓA ĐƠN BÁN LẺ</h2>
+      <div class="r"><span>POS Mini</span><span>${now.toLocaleString("vi-VN")}</span></div>
+      <div>Mã HĐ: ${String(now.getTime()).slice(-8)}</div>
+      <hr/>
+      <ul>
+        ${data.map(i => `<li><span>${i.name} x${i.qty}</span><span>${fmt(i.price * i.qty)} đ</span></li>`).join("")}
+      </ul>
+      <hr/>
+      <div class="r"><span>Tạm tính</span><span>${fmt(subtotal)} đ</span></div>
+      <div class="r"><span>Giảm giá</span><span>− ${fmt(discount)} đ</span></div>
+      <div class="r"><span>Thuế</span><span>${fmt(tax)} đ</span></div>
+      <div class="r"><strong>TỔNG CỘNG</strong><strong>${fmt(grand)} đ</strong></div>
+      <hr/><div>Cảm ơn quý khách!</div>`;
+                closePayModal(); window.print(); clearCart();
+            }
+
+            // ====== QUẢN LÝ SẢN PHẨM ======
+            const manageBtn = byId("manageBtn");
+            const manageModal = byId("manageModal");
+            const productTableBody = manageModal.querySelector("tbody");
+            const closeManage = byId("closeManage");
+            const newProductBtn = byId("newProduct");
+
+            function openManage() {
+                renderTable(); manageModal.style.display = "flex";
+            }
+            function closeManageModal() { manageModal.style.display = "none"; }
+
+            function renderTable() {
+                productTableBody.innerHTML = "";
+                products.forEach(p => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+        <td>${p.id}</td>
+        <td>${p.name}</td>
+        <td>${p.cat}</td>
+        <td>${fmt(p.price)} đ</td>
+        <td>${p.image ? '<a href="' + p.image + '" target="_blank">Xem</a>' : '-'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn" data-act="edit">Sửa</button>
+          <button class="btn danger" data-act="del">Xoá</button>
+        </td>
+      `;
+                    tr.querySelector('[data-act="edit"]').onclick = () => openForm(p);
+                    tr.querySelector('[data-act="del"]').onclick = () => deleteProduct(p.id);
+                    productTableBody.appendChild(tr);
+                });
+            }
+
+            function deleteProduct(id) {
+                const inCart = cart.has(id);
+                if (!confirm("Xoá sản phẩm " + id + "?" + (inCart ? "\n(Mục này sẽ bị xoá khỏi giỏ nếu có)" : ""))) return;
+                products = products.filter(p => p.id !== id);
+                if (inCart) cart.delete(id);
+                saveProducts();
+            }
+
+            // ====== FORM THÊM / SỬA ======
+            const formModal = byId("formModal");
+            const formTitle = byId("formTitle");
+            const f_id = byId("f_id"), f_name = byId("f_name"), f_cat = byId("f_cat"), f_price = byId("f_price"), f_image = byId("f_image"), f_file = byId("f_file"), f_preview = byId("f_preview");
+            const formSave = byId("formSave"), formCancel = byId("formCancel");
+            let editId = null; // null: thêm mới; string: đang sửa
+
+            function openForm(p) {
+                if (p) { // sửa
+                    editId = p.id;
+                    formTitle.textContent = "Sửa sản phẩm";
+                    f_id.value = p.id; f_id.disabled = true;
+                    f_name.value = p.name; f_cat.value = p.cat; f_price.value = p.price;
+                    f_image.value = p.image || ""; f_preview.src = p.image || "";
+                } else { // thêm
+                    editId = null;
+                    formTitle.textContent = "Thêm sản phẩm";
+                    f_id.disabled = false;
+                    f_id.value = ""; f_name.value = ""; f_cat.value = ""; f_price.value = ""; f_image.value = ""; f_preview.removeAttribute("src");
+                }
+                formModal.style.display = "flex";
+            }
+            function closeForm() { formModal.style.display = "none"; f_file.value = ""; }
+
+            // Chọn file ảnh → chuyển base64 để lưu nội bộ
+            f_file.addEventListener("change", () => {
+                const file = f_file.files && f_file.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const dataUrl = e.target.result;
+                    f_image.value = dataUrl;
+                    f_preview.src = dataUrl;
+                };
+                reader.readAsDataURL(file);
+            });
+            f_image.addEventListener("input", () => { f_preview.src = f_image.value; });
+
+            function validateForm() {
+                const id = f_id.value.trim().toUpperCase();
+                const name = f_name.value.trim();
+                const cat = f_cat.value.trim() || "Khác";
+                const price = Number(f_price.value);
+                const image = f_image.value.trim();
+                if (!id || !name || !price || price < 0) { alert("Vui lòng nhập ID, Tên và Giá hợp lệ."); return null; }
+                if (!editId && products.some(p => p.id === id)) { alert("Mã sản phẩm đã tồn tại."); return null; }
+                return { id, name, cat, price, image };
+            }
+
+            formSave.onclick = () => {
+                const data = validateForm(); if (!data) return;
+                if (editId) { // cập nhật
+                    const idx = products.findIndex(p => p.id === editId);
+                    if (idx >= 0) products[idx] = { ...products[idx], ...data, id: editId }; // giữ nguyên id
+                    // cập nhật giỏ nếu có
+                    if (cart.has(editId)) {
+                        const ci = cart.get(editId);
+                        cart.set(editId, { ...ci, name: data.name, cat: data.cat, price: data.price });
+                        renderCart();
+                    }
+                } else { // thêm mới
+                    products.push(data);
+                }
+                saveProducts();
+                closeForm();
+            };
+            formCancel.onclick = closeForm;
+
+            // ====== SỰ KIỆN ======
+            byId("clearCart").onclick = clearCart;
+            byId("hold").onclick = () => alert("Demo: 'Giữ hoá đơn' chưa triển khai.");
+            payBtn.onclick = openPay; closePay.onclick = closePayModal; byId("completeSale").onclick = finalize;
+            manageBtn.onclick = openManage; closeManage.onclick = closeManageModal; newProductBtn.onclick = () => openForm(null);
+            discountInput.onchange = renderCart; taxRateSel.onchange = renderCart;
+
+            // Phím tắt
+            window.addEventListener("keydown", e => {
+                if (e.key === "/") { e.preventDefault(); search.focus(); }
+                if (e.altKey && (e.key === "p" || e.key === "P")) { e.preventDefault(); openPay(); }
+                if (e.altKey && (e.key === "x" || e.key === "X")) { e.preventDefault(); clearCart(); }
+                if (e.altKey && (e.key === "m" || e.key === "M")) { e.preventDefault(); openManage(); }
+            });
+
+            // ====== KHỞI TẠO ======
+            function refreshAll() { renderCats(); renderProducts(); renderTable?.(); }
+            refreshAll(); renderCart();
+
+        })();
+    </script>
+</body>
+
+</html>
